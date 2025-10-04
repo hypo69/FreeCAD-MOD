@@ -1,0 +1,79 @@
+{
+  "mcpServers": {
+    "powershell-https": {
+      "command": "pwsh",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\powershell\\modules\\mcp-powershell-server\\src\\servers\\mcp-powershell-https.ps1"
+      ],
+      "env": {
+        "POWERSHELL_EXECUTION_POLICY": "RemoteSigned"
+      },
+      "workingDirectory": "C:/powershell/modules/mcp-powershell-server"
+    },
+    "powershell-stdio": {
+      "command": "pwsh",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\PowerShell\\modules\\McpPowershellServer\\src\\servers\\Start-McpSTDIOServer.ps1"
+      ],
+      "env": {
+        "POWERSHELL_EXECUTION_POLICY": "RemoteSigned"
+      },
+      "workingDirectory": "C:\\powershell\\modules\\McpPowershellServer"
+    },
+    "wordpress-cli": {
+      "command": "pwsh",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\PowerShell\\modules\\McpPowershellServer\\src\\servers\\Start-McpHTTPServer.ps1"
+      ],
+      "env": {
+        "POWERSHELL_EXECUTION_POLICY": "RemoteSigned"
+      },
+      "workingDirectory": "C:\\powershell\\modules\\McpPowershellServer"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "pydoll": {
+      "command": "python",
+      "args": [
+        "-m",
+        "pydoll_mcp.server"
+      ],
+      "env": {
+        "PYDOLL_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

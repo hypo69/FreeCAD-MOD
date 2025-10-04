@@ -1,0 +1,4 @@
+import FreeCADGui
+from ImageLibraryAddon.image_library_workbench import ImageLibraryWorkbench
+
+FreeCADGui.addWorkbench(ImageLibraryWorkbench())

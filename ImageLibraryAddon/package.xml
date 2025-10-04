@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+	<name>ImageLibraryAddon</name>
+	<description>
+		Manage a personal library of images (PNG, SVG, JPG, etc.) inside FreeCAD.
+		Copy images to a dedicated folder and insert them as Image Planes in 3D view.
+	</description>
+	<version>1.0.0</version>
+	<date>2025-04-05</date>
+
+	<maintainer email="you@example.com">Your Name</maintainer>
+
+	<license file="LICENSE">LGPL-2.1-or-later</license>
+
+	<url type="repository" branch="main">https://github.com/yourname/ImageLibraryAddon</url>
+	<url type="bugtracker">https://github.com/yourname/ImageLibraryAddon/issues</url>
+
+	<icon>Resources/icons/image_library.svg</icon>
+
+	<content>
+		<workbench>ImageLibraryAddon</workbench>
+	</content>
+
+	<dependencies>
+		<freecad>0.20</freecad>
+	</dependencies>
+</package>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<package format="1" xmlns="https://wiki.freecad.org/Package_Metadata">
+	<name>BoxBuilderAddon</name>
+	<description>A simple tool to create parametric boxes with custom dimensions and GUI.</description>
+	<version>1.0.0</version>
+	<date>2025-04-05</date>
+	<maintainer email="you@example.com">Your Name</maintainer>
+	<license file="LICENSE">LGPL-2.1-or-later</license>
+	<url type="repository" branch="main">https://github.com/yourname/BoxBuilderAddon</url>
+	<icon>Resources/icons/box_builder.svg</icon>
+	<content>
+		<workbench>BoxBuilderAddon</workbench>
+	</content>
+	<dependencies>
+		<freecad>0.20</freecad>
+	</dependencies>
+</package>

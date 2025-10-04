@@ -1,0 +1,144 @@
+import FreeCAD, FreeCADGui
+import os
+from PySide import QtGui, QtCore
+
+PARAM_PATH = "User parameter:BaseApp/Preferences/BoxBuilderAddon"
+
+def get_saved_settings():
+    params = FreeCAD.ParamGet(PARAM_PATH)
+    return {
+        "length": params.GetFloat("LastLength", 30.0),
+        "width": params.GetFloat("LastWidth", 20.0),
+        "height": params.GetFloat("LastHeight", 10.0),
+        "name": params.GetString("LastName", "CustomBox"),
+        "centered": params.GetBool("LastCentered", False)
+    }
+
+def save_settings(length, width, height, name, centered):
+    params = FreeCAD.ParamGet(PARAM_PATH)
+    params.SetFloat("LastLength", length)
+    params.SetFloat("LastWidth", width)
+    params.SetFloat("LastHeight", height)
+    params.SetString("LastName", name)
+    params.SetBool("LastCentered", centered)
+
+def create_box(length, width, height, name="CustomBox", centered=False):
+    doc = FreeCAD.ActiveDocument
+    if not doc:
+        doc = FreeCAD.newDocument("BoxBuilder")
+
+    base_name = name
+    index = 1
+    obj_name = base_name
+    while obj_name in [obj.Name for obj in doc.Objects]:
+        obj_name = f"{base_name}_{index}"
+        index += 1
+
+    box = doc.addObject("Part::Box", obj_name)
+    box.Length = length
+    box.Width = width
+    box.Height = height
+
+    if centered:
+        from FreeCAD import Vector
+        box.Placement.Base = Vector(-length/2, -width/2, -height/2)
+
+    doc.recompute()
+    return box
+
+class BoxBuilderDialog(QtGui.QDialog):
+    def __init__(self):
+        super(BoxBuilderDialog, self).__init__()
+        self.setWindowTitle("Box Builder")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.resize(300, 220)
+
+        settings = get_saved_settings()
+
+        self.name_input = QtGui.QLineEdit(settings["name"])
+        self.length_input = QtGui.QLineEdit(str(settings["length"]))
+        self.width_input = QtGui.QLineEdit(str(settings["width"]))
+        self.height_input = QtGui.QLineEdit(str(settings["height"]))
+        self.centered_checkbox = QtGui.QCheckBox("Center on origin")
+        self.centered_checkbox.setChecked(settings["centered"])
+
+        self.create_button = QtGui.QPushButton("Create Box")
+        self.cancel_button = QtGui.QPushButton("Cancel")
+        self.reset_button = QtGui.QPushButton("Reset to Defaults")
+
+        self.create_button.clicked.connect(self.on_create)
+        self.cancel_button.clicked.connect(self.reject)
+        self.reset_button.clicked.connect(self.on_reset)
+
+        layout = QtGui.QFormLayout()
+        layout.addRow("Name:", self.name_input)
+        layout.addRow("Length (mm):", self.length_input)
+        layout.addRow("Width (mm):", self.width_input)
+        layout.addRow("Height (mm):", self.height_input)
+        layout.addRow("", self.centered_checkbox)
+
+        button_layout = QtGui.QHBoxLayout()
+        button_layout.addWidget(self.create_button)
+        button_layout.addWidget(self.cancel_button)
+        button_layout.addWidget(self.reset_button)
+
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.addLayout(layout)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+
+    def on_create(self):
+        try:
+            name = self.name_input.text().strip() or "CustomBox"
+            length = float(self.length_input.text())
+            width = float(self.width_input.text())
+            height = float(self.height_input.text())
+            centered = self.centered_checkbox.isChecked()
+
+            if length <= 0 or width <= 0 or height <= 0:
+                raise ValueError("All dimensions must be positive")
+
+            create_box(length, width, height, name, centered)
+            save_settings(length, width, height, name, centered)
+            self.accept()
+
+        except ValueError as e:
+            QtGui.QMessageBox.warning(self, "Input Error", f"Invalid input:\n{str(e)}")
+
+    def on_reset(self):
+        self.name_input.setText("CustomBox")
+        self.length_input.setText("30.0")
+        self.width_input.setText("20.0")
+        self.height_input.setText("10.0")
+        self.centered_checkbox.setChecked(False)
+
+class BoxBuilderCommand:
+    def GetResources(self):
+        icon_path = os.path.join(os.path.dirname(__file__), "Resources", "icons", "create_box.svg")
+        return {
+            "MenuText": "Box Builder",
+            "ToolTip": "Create a box with custom dimensions",
+            "Pixmap": icon_path
+        }
+    def Activated(self):
+        dialog = BoxBuilderDialog()
+        dialog.exec_()
+    def IsActive(self):
+        return True
+
+class BoxBuilderWorkbench(FreeCADGui.Workbench):
+    MenuText = "Box Builder"
+    ToolTip = "Create custom boxes with GUI"
+
+    def __init__(self):
+        self.Icon = os.path.join(os.path.dirname(__file__), "Resources", "icons", "box_builder.svg")
+
+    def Initialize(self):
+        self.list = ["BoxBuilderCommand"]
+        self.appendToolbar("Box Tools", self.list)
+        self.appendMenu("Box Builder", self.list)
+
+    def GetClassName(self):
+        return "Gui::PythonWorkbench"
+
+FreeCADGui.addCommand("BoxBuilderCommand", BoxBuilderCommand())

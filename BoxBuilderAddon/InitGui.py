@@ -1,0 +1,4 @@
+import FreeCADGui
+from BoxBuilderAddon.box_builder_workbench import BoxBuilderWorkbench
+
+FreeCADGui.addWorkbench(BoxBuilderWorkbench())

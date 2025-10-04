@@ -1,0 +1,3 @@
+import FreeCADGui
+from HelloWorldAddon.hello_workbench import HelloWorldWorkbench
+FreeCADGui.addWorkbench(HelloWorldWorkbench())

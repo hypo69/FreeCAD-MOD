@@ -1,0 +1,47 @@
+flowchart TD
+    A[Инициализация GoogleGenerativeAi] --> B{Успешна ли настройка API?}
+    B -- Нет --> C[Выброс исключения\n(ошибка аутентификации/инициализации)]
+    B -- Да --> D[Модель инициализирована\nСоздан сеанс чата _chat]
+
+    D --> E{Какой метод вызван?}
+
+    E -->|ask (stateless)| F[Формирование content_to_send\n(включая контекст RAG)]
+    F --> G[Цикл попыток (до attempts)]
+    G --> H{Ответ от модели получен?}
+    H -- Нет --> I{Тип ошибки?}
+    I -->|Сетевая / ServiceUnavailable| J[Пауза + повтор]
+    I -->|ResourceExhausted| K[Возврат 'ResourceExhausted']
+    I -->|InvalidArgument / Auth| L[Возврат None]
+    H -- Да --> M[Очистка ответа (normalize_answer)?]
+    M --> N[Возврат текста]
+
+    E -->|chat (stateful)| O[Формирование parts_to_send\n(включая контекст RAG)]
+    O --> P[Отправка через _chat.send_message_async]
+    P --> Q{Успешен ли ответ?}
+    Q -- Нет --> R{Тип ошибки?}
+    R -->|ResourceExhausted| S[Длительная пауза + перезапуск чата]
+    R -->|InvalidArgument (токены)| T[Очистка истории + повтор]
+    R -->|gRPC DEADLINE_EXCEEDED| U[Пауза + перезапуск чата]
+    Q -- Да --> V[Добавление в chat_history\n(пользователь → модель)]
+    V --> W[Асинхронное сохранение истории в JSON]
+    W --> X[Возврат текста]
+
+    E -->|describe_image| Y[Чтение изображения (Path → bytes)]
+    Y --> Z{Успешно?}
+    Z -- Нет --> AA[Возврат None]
+    Z -- Да --> AB[Загрузка файла через genai.upload_file_async]
+    AB --> AC[Отправка [prompt + file] в generate_content]
+    AC --> AD{Ответ содержит текст?}
+    AD -- Нет --> AE[Логирование feedback, возврат None]
+    AD -- Да --> AF[Возврат описания изображения]
+
+    C --> AG[Завершение]
+    N --> AG
+    L --> AG
+    K --> AG
+    X --> AG
+    S --> AG
+    T --> AG
+    U --> AG
+    AE --> AG
+    AF --> AG

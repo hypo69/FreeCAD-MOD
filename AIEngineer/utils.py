@@ -226,21 +226,6 @@ def get_api_key() -> str:
     return api_key
 
 
-def normalize_answer(answer: str) -> str:
-    """
-    Функция нормализует ответ от AI, удаляя лишние пробелы и переносы строк.
-    
-    Args:
-        answer (str): Исходный ответ.
-    
-    Returns:
-        str: Нормализованный ответ.
-    """
-    if not answer:
-        return ''
-    return answer.strip()
-
-
 def get_image_bytes(image_path: str) -> Optional[bytes]:
     """
     Функция считывает изображение как байты.
@@ -257,6 +242,30 @@ def get_image_bytes(image_path: str) -> Optional[bytes]:
     except Exception as ex:
         FreeCAD.Console.PrintError(f'[AIEngineer] Failed to read image: {ex}\n')
         return None
+
+
+def normalize_answer(answer: str) -> str:
+    """
+    Функция нормализует ответ от AI, удаляя markdown разметку кода и лишние пробелы.
+    
+    Args:
+        answer (str): Исходный ответ.
+    
+    Returns:
+        str: Нормализованный ответ.
+    """
+    if not answer:
+        return ''
+    
+    # Удаление markdown блоков кода
+    import re
+    answer = re.sub(r'```[a-zA-Z]*\n', '', answer)
+    answer = re.sub(r'```', '', answer)
+    
+    # Удаление лишних пробелов и переносов строк
+    answer = answer.strip()
+    
+    return answer
 
 
 def j_dumps(data: dict | list, filepath: Path) -> bool:

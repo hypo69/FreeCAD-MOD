@@ -1,62 +1,71 @@
-# utils.py
+# -*- coding: utf-8 -*-
+"""
+Вспомогательные функции и общие константы для AIEngineer.
+"""
+
+import FreeCAD
+import os
 import json
-import re
+import datetime
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Optional
 
-# === string/ai_string_utils.py ===
-def normalize_answer(text: str) -> str:
-    text = text.strip()
-    if text.startswith("```") and text.endswith("```"):
-        lines = text.split("\n")
-        if len(lines) >= 2:
-            return "\n".join(lines[1:-1])
-    if text.startswith("text\n"):
-        text = text[5:]
-    return text.strip()
+# Единый путь к данным аддона — используется ВЕЗДЕ
+AI_DATA_DIR: Path = Path(FreeCAD.getUserAppDataDir()) / "AIEngineer" / "data"
+AI_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# === file.py ===
-def read_text_file(file_path: Path) -> Optional[str]:
+# Путь к иконкам
+ICON_PATH: str = str(Path(__file__).parent / "Resources" / "icons")
+
+def get_icon(icon_name: str) -> str:
+    """
+    Возвращает полный путь к иконке или пустую строку, если файл не найден.
+    """
+    icon_file = os.path.join(ICON_PATH, icon_name)
+    if os.path.exists(icon_file):
+        return icon_file
+    FreeCAD.Console.PrintWarning(f"[AIEngineer] Icon not found: {icon_file}\n")
+    return ""
+
+def get_image_files() -> list[str]:
+    """Возвращает список изображений в AI_DATA_DIR."""
+    exts = {'.png', '.jpg', '.jpeg', '.bmp', '.svg', '.gif'}
+    return sorted([
+        f for f in os.listdir(AI_DATA_DIR)
+        if Path(f).suffix.lower() in exts
+    ])
+
+def get_text_files() -> list[str]:
+    """Возвращает список текстовых файлов в AI_DATA_DIR."""
+    exts = {'.txt', '.md'}
+    return sorted([
+        f for f in os.listdir(AI_DATA_DIR)
+        if Path(f).suffix.lower() in exts
+    ])
+
+def safe_remove(filepath: Path) -> bool:
+    """Безопасное удаление файла."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception:
-        return None
-
-def save_text_file(data: str, file_path: Path) -> bool:
-    try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(data)
+        os.remove(filepath)
         return True
-    except Exception:
+    except Exception as ex:
+        FreeCAD.Console.PrintError(f"[AIEngineer] Delete error: {ex}\n")
         return False
 
-# === jjson.py ===
-def j_dumps(data: Any, file_path: Path, mode: str = 'w') -> bool:
+def save_ai_response_to_history(prompt: str, response: str) -> None:
+    """Сохраняет диалог (prompt + response) в историю."""
+    history_dir = AI_DATA_DIR / "ai_history"
+    history_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filepath = history_dir / f"ai_response_{timestamp}.json"
     try:
-        with open(file_path, mode, encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception:
-        return False
-
-def j_loads(file_path: Path) -> Optional[Any]:
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return None
-
-# === image.py ===
-def get_image_bytes(image_path: Path) -> Optional[bytes]:
-    try:
-        with open(image_path, "rb") as f:
-            return f.read()
-    except Exception:
-        return None
-
-# === printer.py (упрощённый) ===
-def pprint(*args, **kwargs):
-    import FreeCAD
-    msg = " ".join(str(a) for a in args)
-    FreeCAD.Console.PrintMessage(f"[PPRINT] {msg}\n")
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump({
+                "timestamp": timestamp,
+                "prompt": prompt,
+                "response": response,
+                "provider": "gemini"
+            }, f, ensure_ascii=False, indent=2)
+        FreeCAD.Console.PrintMessage(f"[AIEngineer] Response saved to history: {filepath.name}\n")
+    except Exception as ex:
+        FreeCAD.Console.PrintError(f"[AIEngineer] Failed to save history: {ex}\n")

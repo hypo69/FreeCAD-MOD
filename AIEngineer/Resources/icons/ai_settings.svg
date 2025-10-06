@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Фон (опционально, можно удалить для прозрачности) -->
+  <rect width="64" height="64" fill="none"/>
+
+  <!-- Шестерёнка -->
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#4A90E2" stroke-width="2"/>
+  <circle cx="32" cy="32" r="8" fill="none" stroke="#4A90E2" stroke-width="2"/>
+  
+  <!-- Зубцы шестерёнки -->
+  <line x1="32" y1="10" x2="32" y2="6" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="54" y1="32" x2="58" y2="32" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="54" x2="32" y2="58" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="10" y1="32" x2="6" y2="32" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  
+  <line x1="47.5" y1="16.5" x2="50.3" y2="13.7" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="47.5" y1="47.5" x2="50.3" y2="50.3" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="16.5" y1="47.5" x2="13.7" y2="50.3" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+  <line x1="16.5" y1="16.5" x2="13.7" y2="13.7" stroke="#4A90E2" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Символ ИИ: упрощённый "мозг" или нейросеть -->
+  <circle cx="32" cy="32" r="5" fill="none" stroke="#4A90E2" stroke-width="2"/>
+  <path d="M28 28 L24 24" stroke="#4A90E2" stroke-width="2" fill="none"/>
+  <path d="M36 28 L40 24" stroke="#4A90E2" stroke-width="2" fill="none"/>
+  <path d="M28 36 L24 40" stroke="#4A90E2" stroke-width="2" fill="none"/>
+  <path d="M36 36 L40 40" stroke="#4A90E2" stroke-width="2" fill="none"/>
+</svg>

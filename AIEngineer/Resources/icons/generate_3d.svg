@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Прозрачный фон -->
+  <rect width="64" height="64" fill="none"/>
+
+  <!-- Проволочный куб (3D-объект) -->
+  <!-- Задняя грань -->
+  <line x1="20" y1="20" x2="44" y2="20" stroke="#D9534F" stroke-width="2"/>
+  <line x1="44" y1="20" x2="44" y2="44" stroke="#D9534F" stroke-width="2"/>
+  <line x1="44" y1="44" x2="20" y2="44" stroke="#D9534F" stroke-width="2"/>
+  <line x1="20" y1="44" x2="20" y2="20" stroke="#D9534F" stroke-width="2"/>
+
+  <!-- Передняя грань -->
+  <line x1="16" y1="16" x2="40" y2="16" stroke="#D9534F" stroke-width="2"/>
+  <line x1="40" y1="16" x2="40" y2="40" stroke="#D9534F" stroke-width="2"/>
+  <line x1="40" y1="40" x2="16" y2="40" stroke="#D9534F" stroke-width="2"/>
+  <line x1="16" y1="40" x2="16" y2="16" stroke="#D9534F" stroke-width="2"/>
+
+  <!-- Рёбра глубины -->
+  <line x1="16" y1="16" x2="20" y2="20" stroke="#D9534F" stroke-width="2"/>
+  <line x1="40" y1="16" x2="44" y2="20" stroke="#D9534F" stroke-width="2"/>
+  <line x1="40" y1="40" x2="44" y2="44" stroke="#D9534F" stroke-width="2"/>
+  <line x1="16" y1="40" x2="20" y2="44" stroke="#D9534F" stroke-width="2"/>
+</svg>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Фон (прозрачный) -->
+  <rect width="64" height="64" fill="none"/>
+
+  <!-- Документ (лист бумаги) -->
+  <path d="M16 12 H40 L48 20 V52 H16 Z" 
+        fill="none" 
+        stroke="#5CB85C" 
+        stroke-width="2"
+        stroke-linejoin="round"/>
+
+  <!-- Стрелка экспорта (вверх и вправо) -->
+  <path d="M24 36 L24 24 L36 24" 
+        fill="none" 
+        stroke="#5CB85C" 
+        stroke-width="2" 
+        stroke-linecap="round"/>
+
+  <path d="M32 20 L36 24 L40 20" 
+        fill="none" 
+        stroke="#5CB85C" 
+        stroke-width="2" 
+        stroke-linecap="round"/>
+</svg>

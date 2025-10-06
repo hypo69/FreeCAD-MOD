@@ -4,7 +4,11 @@
 
 """
 Рабочая среда AI Engineer для FreeCAD.
+========================================
+
 Интеграция с Google Gemini для анализа изображений и генерации 3D-моделей.
+
+.. module:: AIEngineer.ai_engineer_workbench
 """
 
 import FreeCAD
@@ -23,6 +27,31 @@ from AIEngineer.gemini import GoogleGenerativeAi
 AI_DATA_DIR: Path = Path(FreeCAD.getUserAppDataDir()) / "AIEngineer" / "data"
 AI_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+# Путь к иконкам
+ICON_PATH: str = os.path.join(os.path.dirname(__file__), "Resources", "icons")
+
+
+def get_icon(icon_name: str) -> str:
+    """
+    Функция возвращает полный путь к иконке.
+    
+    Args:
+        icon_name (str): Имя файла иконки.
+    
+    Returns:
+        str: Полный путь к файлу иконки или пустая строка если файл не найден.
+    
+    Example:
+        >>> get_icon("ai_chat.svg")
+        '/path/to/AIEngineer/Resources/icons/ai_chat.svg'
+    """
+    icon_file: str = os.path.join(ICON_PATH, icon_name)
+    if os.path.exists(icon_file):
+        return icon_file
+    FreeCAD.Console.PrintWarning(f"[AIEngineer] Icon not found: {icon_file}\n")
+    return ""
+
+
 # Импорт проекта
 try:
     from AIEngineer.project_manager import AIProject
@@ -31,19 +60,52 @@ except Exception as ex:
     FreeCAD.Console.PrintError(f"[AIEngineer] Project manager error: {ex}\n")
     project = None
 
+
 # === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 def get_image_files() -> list[str]:
-    """Функция возвращает список файлов изображений в директории AI_DATA_DIR."""
-    exts = {'.png', '.jpg', '.jpeg', '.bmp', '.svg', '.gif'}
+    """
+    Функция возвращает список файлов изображений в директории AI_DATA_DIR.
+    
+    Returns:
+        list[str]: Список имен файлов изображений.
+    
+    Example:
+        >>> get_image_files()
+        ['image1.png', 'image2.jpg']
+    """
+    exts: set[str] = {'.png', '.jpg', '.jpeg', '.bmp', '.svg', '.gif'}
     return sorted([f for f in os.listdir(AI_DATA_DIR) if Path(f).suffix.lower() in exts])
+
 
 def get_text_files() -> list[str]:
-    """Функция возвращает список текстовых файлов в директории AI_DATA_DIR."""
-    exts = {'.txt', '.md'}
+    """
+    Функция возвращает список текстовых файлов в директории AI_DATA_DIR.
+    
+    Returns:
+        list[str]: Список имен текстовых файлов.
+    
+    Example:
+        >>> get_text_files()
+        ['prompt1.txt', 'prompt2.md']
+    """
+    exts: set[str] = {'.txt', '.md'}
     return sorted([f for f in os.listdir(AI_DATA_DIR) if Path(f).suffix.lower() in exts])
 
+
 def safe_remove(filepath: Path) -> bool:
-    """Функция удаляет файл и возвращает статус операции."""
+    """
+    Функция удаляет файл и возвращает статус операции.
+    
+    Args:
+        filepath (Path): Путь к удаляемому файлу.
+    
+    Returns:
+        bool: True если файл успешно удален, False в случае ошибки.
+    
+    Example:
+        >>> safe_remove(Path('/tmp/test.txt'))
+        True
+    """
     try:
         os.remove(filepath)
         return True
@@ -51,8 +113,21 @@ def safe_remove(filepath: Path) -> bool:
         FreeCAD.Console.PrintError(f"[AIEngineer] Delete error: {ex}\n")
         return False
 
+
 def save_ai_response_to_history(prompt: str, response: str) -> None:
-    """Функция сохраняет диалог (prompt + response) в историю."""
+    """
+    Функция сохраняет диалог (prompt + response) в историю.
+    
+    Args:
+        prompt (str): Текст запроса пользователя.
+        response (str): Ответ от AI.
+    
+    Returns:
+        None
+    
+    Example:
+        >>> save_ai_response_to_history("Describe image", "This is a cat")
+    """
     history_dir: Path = AI_DATA_DIR / "ai_history"
     history_dir.mkdir(parents=True, exist_ok=True)
     timestamp: str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -70,17 +145,34 @@ def save_ai_response_to_history(prompt: str, response: str) -> None:
     except Exception as ex:
         FreeCAD.Console.PrintError(f"[AIEngineer] Failed to save history: {ex}\n")
 
+
 # === КОМАНДЫ ===
 class LoadImageCommand:
     """Команда загрузки изображений в рабочую директорию AIEngineer."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Load Image", "ToolTip": "Load image into AI workspace", "Pixmap": "load_image.svg"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню, подсказкой и иконкой.
+        """
+        return {
+            "MenuText": "Load Image",
+            "ToolTip": "Load image into AI workspace",
+            "Pixmap": get_icon("load_image.svg")
+        }
 
     def Activated(self) -> None:
-        """Функция выполняет загрузку выбранных изображений."""
-        files, _ = QtGui.QFileDialog.getOpenFileNames(None, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp *.svg *.gif)")
+        """
+        Функция выполняет загрузку выбранных изображений.
+        
+        Returns:
+            None
+        """
+        files, _ = QtGui.QFileDialog.getOpenFileNames(
+            None, "Select Images", "", "Image Files (*.png *.jpg *.jpeg *.bmp *.svg *.gif)"
+        )
         if not files:
             return
         for src in files:
@@ -99,34 +191,74 @@ class LoadImageCommand:
                 QtGui.QMessageBox.critical(None, "Error", f"Failed to copy:\n{str(ex)}")
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class LoadTextCommand:
     """Команда загрузки или создания текстового файла."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Load Text", "ToolTip": "Load or write text (Markdown)", "Pixmap": "load_text.svg"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню, подсказкой и иконкой.
+        """
+        return {
+            "MenuText": "Load Text",
+            "ToolTip": "Load or write text (Markdown)",
+            "Pixmap": get_icon("load_text.svg")
+        }
 
     def Activated(self) -> None:
-        """Функция открывает диалог редактора текста."""
+        """
+        Функция открывает диалог редактора текста.
+        
+        Returns:
+            None
+        """
         dialog = TextEditorDialog()
         dialog.exec_()
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class LinkContentCommand:
     """Команда связывания изображения с текстовым описанием."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Link Content", "ToolTip": "Link image to text description", "Pixmap": "link_content.svg"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню, подсказкой и иконкой.
+        """
+        return {
+            "MenuText": "Link Content",
+            "ToolTip": "Link image to text description",
+            "Pixmap": get_icon("link_content.svg")
+        }
 
     def Activated(self) -> None:
-        """Функция открывает диалог связывания контента."""
+        """
+        Функция открывает диалог связывания контента.
+        
+        Returns:
+            None
+        """
         if project is None:
             QtGui.QMessageBox.critical(None, "Error", "Project manager not available.")
             return
@@ -134,59 +266,122 @@ class LinkContentCommand:
         dialog.exec_()
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: True если менеджер проектов доступен.
+        """
         return project is not None
+
 
 class ManageContentCommand:
     """Команда управления загруженным контентом."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Manage Content", "ToolTip": "View and edit your files", "Pixmap": "manage_content.svg"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню, подсказкой и иконкой.
+        """
+        return {
+            "MenuText": "Manage Content",
+            "ToolTip": "View and edit your files",
+            "Pixmap": get_icon("manage_content.svg")
+        }
 
     def Activated(self) -> None:
-        """Функция открывает диалог управления контентом."""
+        """
+        Функция открывает диалог управления контентом.
+        
+        Returns:
+            None
+        """
         dialog = ContentManagerDialog()
         dialog.exec_()
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class AISettingsCommand:
     """Команда открытия настроек ИИ-провайдера."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "AI Settings", "ToolTip": "Configure AI provider and API key"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню и подсказкой.
+        """
+        return {
+            "MenuText": "AI Settings",
+            "ToolTip": "Configure AI provider and API key"
+        }
 
     def Activated(self) -> None:
-        """Функция открывает диалог настроек."""
+        """
+        Функция открывает диалог настроек.
+        
+        Returns:
+            None
+        """
         from AIEngineer.settings_dialog import SettingsDialog
         dialog = SettingsDialog()
         dialog.exec_()
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class AskAICommand:
     """Команда отправки запроса в Google Gemini."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Ask AI", "ToolTip": "Send linked image+text to Google Gemini", "Pixmap": "ai_chat.svg"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню, подсказкой и иконкой.
+        """
+        return {
+            "MenuText": "Ask AI",
+            "ToolTip": "Send linked image+text to Google Gemini",
+            "Pixmap": get_icon("ai_chat.svg")
+        }
 
     def Activated(self) -> None:
-        """Функция отправляет связанный контент в Google Gemini."""
+        """
+        Функция отправляет связанный контент в Google Gemini.
+        
+        Returns:
+            None
+        """
         if project is None or not project.get_all_links():
-            QtGui.QMessageBox.information(None, "No Data", "First link an image to a text using 'Link Content'.")
+            QtGui.QMessageBox.information(
+                None, "No Data", "First link an image to a text using 'Link Content'."
+            )
             return
 
         settings = QtCore.QSettings("FreeCAD", "AIEngineer")
         api_key: str = settings.value("api_key", "")
         if not api_key:
-            QtGui.QMessageBox.critical(None, "Error", "Gemini API key not set. Go to AI Settings.")
+            QtGui.QMessageBox.critical(
+                None, "Error", "Gemini API key not set. Go to AI Settings."
+            )
             return
 
         links = project.get_all_links()
@@ -209,8 +404,7 @@ class AskAICommand:
         response: str = "Failed to get response."
 
         try:
-            from AIEngineer.ai_client import GoogleGenerativeAi
-            llm = GoogleGenerativeAi(api_key=api_key)
+            llm = GoogleGenerativeAi(api_key=api_key, model_name='gemini-2.0-flash-exp')
             response = llm.ask(q=prompt, image_path=str(image_path), attempts=5)
             if response is None:
                 response = "Gemini returned empty response."
@@ -222,18 +416,37 @@ class AskAICommand:
         dialog.exec_()
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class Generate3DCommand:
     """Команда генерации 3D-объекта по текстовому описанию."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Generate 3D from AI", "ToolTip": "Create 3D object based on AI description"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню и подсказкой.
+        """
+        return {
+            "MenuText": "Generate 3D from AI",
+            "ToolTip": "Create 3D object based on AI description"
+        }
 
     def Activated(self) -> None:
-        """Функция создаёт 3D-объект по описанию."""
+        """
+        Функция создаёт 3D-объект по описанию.
+        
+        Returns:
+            None
+        """
         text, ok = QtGui.QInputDialog.getMultiLineText(
             None, "Generate 3D", "Enter object description:", "Box 50x30x20 mm"
         )
@@ -260,19 +473,40 @@ class Generate3DCommand:
             QtGui.QMessageBox.critical(None, "Error", f"3D generation failed:\n{str(ex)}")
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 class ExportProjectCommand:
     """Команда экспорта проекта в ZIP-архив."""
 
     def GetResources(self) -> dict[str, str]:
-        """Функция возвращает ресурсы для отображения команды."""
-        return {"MenuText": "Export Project", "ToolTip": "Export all data as ZIP"}
+        """
+        Функция возвращает ресурсы для отображения команды.
+        
+        Returns:
+            dict[str, str]: Словарь с текстом меню и подсказкой.
+        """
+        return {
+            "MenuText": "Export Project",
+            "ToolTip": "Export all data as ZIP"
+        }
 
     def Activated(self) -> None:
-        """Функция создаёт ZIP-архив с данными проекта."""
-        zip_path, _ = QtGui.QFileDialog.getSaveFileName(None, "Save Project", "", "ZIP Files (*.zip)")
+        """
+        Функция создаёт ZIP-архив с данными проекта.
+        
+        Returns:
+            None
+        """
+        zip_path, _ = QtGui.QFileDialog.getSaveFileName(
+            None, "Save Project", "", "ZIP Files (*.zip)"
+        )
         if not zip_path:
             return
         if not zip_path.endswith(".zip"):
@@ -290,14 +524,26 @@ class ExportProjectCommand:
             QtGui.QMessageBox.critical(None, "Error", f"Export failed:\n{str(ex)}")
 
     def IsActive(self) -> bool:
-        """Функция возвращает True, если команда активна."""
+        """
+        Функция возвращает True, если команда активна.
+        
+        Returns:
+            bool: Всегда True.
+        """
         return True
+
 
 # === ДИАЛОГИ ===
 class TextEditorDialog(QtGui.QDialog):
     """Диалог редактирования текста."""
 
     def __init__(self, filepath: Optional[Path] = None):
+        """
+        Функция инициализирует диалог редактора текста.
+        
+        Args:
+            filepath (Optional[Path]): Путь к файлу для редактирования. По умолчанию None.
+        """
         super().__init__()
         self.filepath = filepath
         self.setWindowTitle("Edit Text" if filepath else "New Text")
@@ -327,7 +573,12 @@ class TextEditorDialog(QtGui.QDialog):
         self.setLayout(layout)
 
     def save_text(self) -> None:
-        """Функция сохраняет текст в файл."""
+        """
+        Функция сохраняет текст в файл.
+        
+        Returns:
+            None
+        """
         text = self.text_edit.toPlainText().strip()
         if not text:
             QtGui.QMessageBox.warning(self, "Warning", "Text is empty!")
@@ -350,10 +601,12 @@ class TextEditorDialog(QtGui.QDialog):
         except Exception as ex:
             QtGui.QMessageBox.critical(self, "Save Error", str(ex))
 
+
 class LinkContentDialog(QtGui.QDialog):
     """Диалог связывания изображения и текста."""
 
     def __init__(self):
+        """Функция инициализирует диалог связывания контента."""
         super().__init__()
         self.setWindowTitle("Link Image and Text")
         self.resize(600, 400)
@@ -376,7 +629,12 @@ class LinkContentDialog(QtGui.QDialog):
         self.setLayout(main_layout)
 
     def refresh_lists(self) -> None:
-        """Функция обновляет списки изображений и текстов."""
+        """
+        Функция обновляет списки изображений и текстов.
+        
+        Returns:
+            None
+        """
         self.image_list.clear()
         self.text_list.clear()
         for f in get_image_files():
@@ -388,7 +646,12 @@ class LinkContentDialog(QtGui.QDialog):
             self.text_list.addItem(f)
 
     def link_selected(self) -> None:
-        """Функция связывает выбранные изображение и текст."""
+        """
+        Функция связывает выбранные изображение и текст.
+        
+        Returns:
+            None
+        """
         img_items = self.image_list.selectedItems()
         txt_items = self.text_list.selectedItems()
         if not img_items or not txt_items:
@@ -400,10 +663,12 @@ class LinkContentDialog(QtGui.QDialog):
         FreeCAD.Console.PrintMessage(f"[AIEngineer] Linked: {image_file} ↔ {text_file}\n")
         self.refresh_lists()
 
+
 class ContentManagerDialog(QtGui.QDialog):
     """Диалог управления контентом."""
 
     def __init__(self):
+        """Функция инициализирует диалог управления контентом."""
         super().__init__()
         self.setWindowTitle("AI Engineer — Content Manager")
         self.resize(700, 500)
@@ -420,7 +685,12 @@ class ContentManagerDialog(QtGui.QDialog):
         self.setLayout(layout)
 
     def create_image_tab(self) -> QtGui.QWidget:
-        """Функция создаёт вкладку для изображений."""
+        """
+        Функция создаёт вкладку для изображений.
+        
+        Returns:
+            QtGui.QWidget: Виджет вкладки изображений.
+        """
         widget = QtGui.QWidget()
         layout = QtGui.QVBoxLayout()
         self.image_list = QtGui.QListWidget()
@@ -440,7 +710,12 @@ class ContentManagerDialog(QtGui.QDialog):
         return widget
 
     def create_text_tab(self) -> QtGui.QWidget:
-        """Функция создаёт вкладку для текстов."""
+        """
+        Функция создаёт вкладку для текстов.
+        
+        Returns:
+            QtGui.QWidget: Виджет вкладки текстов.
+        """
         widget = QtGui.QWidget()
         layout = QtGui.QVBoxLayout()
         self.text_list = QtGui.QListWidget()
@@ -460,7 +735,12 @@ class ContentManagerDialog(QtGui.QDialog):
         return widget
 
     def refresh_image_list(self) -> None:
-        """Функция обновляет список изображений."""
+        """
+        Функция обновляет список изображений.
+        
+        Returns:
+            None
+        """
         self.image_list.clear()
         for f in get_image_files():
             item = QtGui.QListWidgetItem(f)
@@ -469,13 +749,23 @@ class ContentManagerDialog(QtGui.QDialog):
             self.image_list.addItem(item)
 
     def refresh_text_list(self) -> None:
-        """Функция обновляет список текстов."""
+        """
+        Функция обновляет список текстов.
+        
+        Returns:
+            None
+        """
         self.text_list.clear()
         for f in get_text_files():
             self.text_list.addItem(f)
 
     def link_image(self) -> None:
-        """Функция связывает изображение с текстом."""
+        """
+        Функция связывает изображение с текстом.
+        
+        Returns:
+            None
+        """
         items = self.image_list.selectedItems()
         if not items or project is None:
             return
@@ -484,14 +774,21 @@ class ContentManagerDialog(QtGui.QDialog):
         if not text_files:
             QtGui.QMessageBox.information(self, "No Texts", "No text files available.")
             return
-        text_file, ok = QtGui.QInputDialog.getItem(self, "Link Text", "Select text file:", text_files, 0, False)
+        text_file, ok = QtGui.QInputDialog.getItem(
+            self, "Link Text", "Select text file:", text_files, 0, False
+        )
         if ok and text_file:
             project.link_text_to_image(image_file, text_file)
             FreeCAD.Console.PrintMessage(f"[AIEngineer] Linked: {image_file} ↔ {text_file}\n")
             self.refresh_image_list()
 
     def unlink_image(self) -> None:
-        """Функция отвязывает изображение от текста."""
+        """
+        Функция отвязывает изображение от текста.
+        
+        Returns:
+            None
+        """
         items = self.image_list.selectedItems()
         if not items or project is None:
             return
@@ -502,7 +799,12 @@ class ContentManagerDialog(QtGui.QDialog):
             self.refresh_image_list()
 
     def edit_selected_text(self) -> None:
-        """Функция редактирует выбранный текст."""
+        """
+        Функция редактирует выбранный текст.
+        
+        Returns:
+            None
+        """
         items = self.text_list.selectedItems()
         if not items:
             return
@@ -512,6 +814,8 @@ class ContentManagerDialog(QtGui.QDialog):
         dialog.exec_()
         self.refresh_text_list()
 
+   
+    # Внимание! Эта функция была изменена.
     def delete_selected_text(self) -> None:
         """Функция удаляет выбранный текст."""
         items = self.text_list.selectedItems()

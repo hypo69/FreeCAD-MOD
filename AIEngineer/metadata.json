@@ -1,0 +1,10 @@
+{
+  "name": "AIEngineer",
+  "version": "0.1.0",
+  "date": "2025-10-05",
+  "author": "hypo69",
+  "license": "MIT",
+  "description": "Google Gemini-powered design assistant for FreeCAD.",
+  "url": "https://github.com/hypo69/AIEngineer",
+  "freecad_version": "0.21"
+}

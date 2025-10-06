@@ -15,6 +15,7 @@ import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
 import FreeCAD
+from AIEngineer.settings_dialog import SettingsDialog
 
 # === ЛОГГЕР ДЛЯ FREECAD ===
 def log_info(msg: str) -> None:

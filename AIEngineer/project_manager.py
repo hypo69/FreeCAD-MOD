@@ -2,6 +2,7 @@
 import os
 import json
 from pathlib import Path
+from AIEngineer.settings_dialog import SettingsDialog
 
 AI_DATA_DIR = os.path.join(os.path.expanduser("~"), ".FreeCAD", "AIAssistant", "data")
 PROJECT_FILE = os.path.join(AI_DATA_DIR, "project.json")

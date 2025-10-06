@@ -104,7 +104,7 @@ class OpenAIClient:
 class GeminiClient:
     """Клиент для Google Gemini API (адаптированный из gemini.py)."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-1.5-flash-latest"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
         """Функция инициализирует клиент Google Generative AI."""
         try:
             import google.generativeai as genai

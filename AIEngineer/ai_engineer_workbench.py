@@ -13,19 +13,20 @@ import FreeCAD
 import FreeCADGui
 from .utils import get_icon
 
+
 class AIEngineerWorkbench(FreeCADGui.Workbench):
     """Рабочая среда AI Engineer."""
 
-    MenuText = "AI Engineer"
-    ToolTip = "Google Gemini-powered design assistant for engineers"
+    MenuText = 'AI Engineer'
+    ToolTip = 'Google Gemini-powered design assistant for engineers'
 
     def __init__(self) -> None:
-        """Инициализирует иконку рабочей среды."""
-        self.Icon = get_icon("ai_engineer.svg")
+        """Функция инициализирует иконку рабочей среды."""
+        self.Icon = get_icon('ai_engineer.svg')
 
     def Initialize(self) -> None:
         """
-        Регистрирует команды в интерфейсе FreeCAD.
+        Функция регистрирует команды в интерфейсе FreeCAD.
         
         Импорт команд выполняется локально — это безопасно и эффективно.
         Добавлена обработка исключений, чтобы ошибка в одной команде
@@ -41,6 +42,7 @@ class AIEngineerWorkbench(FreeCADGui.Workbench):
                 LoadTextCommand,
                 LinkContentCommand,
                 ManageContentCommand,
+                ChatCommand,
                 AskAICommand,
                 Generate3DCommand,
                 AISettingsCommand,
@@ -52,6 +54,7 @@ class AIEngineerWorkbench(FreeCADGui.Workbench):
                 LoadTextCommand,
                 LinkContentCommand,
                 ManageContentCommand,
+                ChatCommand,
                 AskAICommand,
                 Generate3DCommand,
                 AISettingsCommand,
@@ -60,14 +63,14 @@ class AIEngineerWorkbench(FreeCADGui.Workbench):
 
         except Exception as ex:
             FreeCAD.Console.PrintError(
-                f"[AIEngineer] Failed to import commands in workbench: {ex}\n"
+                f'[AIEngineer] Failed to import commands in workbench: {ex}\n'
             )
             # Даже при ошибке — регистрируем хотя бы настройки, чтобы пользователь мог исправить проблему
             try:
                 from .commands import AISettingsCommand
                 command_classes = [AISettingsCommand]
             except Exception:
-                FreeCAD.Console.PrintError("[AIEngineer] Even settings command failed to load.\n")
+                FreeCAD.Console.PrintError('[AIEngineer] Even settings command failed to load.\n')
                 return
 
         # Регистрация команд
@@ -78,17 +81,17 @@ class AIEngineerWorkbench(FreeCADGui.Workbench):
                 command_names.append(name)
             except Exception as ex:
                 FreeCAD.Console.PrintError(
-                    f"[AIEngineer] Failed to register command {cls.__name__}: {ex}\n"
+                    f'[AIEngineer] Failed to register command {cls.__name__}: {ex}\n'
                 )
                 continue
 
         if command_names:
-            # Добавляем команды на панель инструментов и в меню
-            self.appendToolbar("AI Tools", command_names)
-            self.appendMenu("AI Engineer", command_names)
+            # Добавление команд на панель инструментов и в меню
+            self.appendToolbar('AI Tools', command_names)
+            self.appendMenu('AI Engineer', command_names)
         else:
-            FreeCAD.Console.PrintWarning("[AIEngineer] No commands were registered.\n")
+            FreeCAD.Console.PrintWarning('[AIEngineer] No commands were registered.\n')
 
     def GetClassName(self) -> str:
-        """Возвращает имя класса рабочей среды для FreeCAD."""
-        return "Gui::PythonWorkbench"
+        """Функция возвращает имя класса рабочей среды для FreeCAD."""
+        return 'Gui::PythonWorkbench'

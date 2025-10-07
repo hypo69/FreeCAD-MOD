@@ -1,3 +1,4 @@
+## \file AIEngineer/dialogs/ai_response.py
 # -*- coding: utf-8 -*-
 """
 Диалог отображения ответа от Google Gemini.

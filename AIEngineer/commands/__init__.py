@@ -1,3 +1,4 @@
+## \file AIEngineer/commands/__init__.py
 # -*- coding: utf-8 -*-
 """
 Импорт всех команд рабочей среды AI Engineer.

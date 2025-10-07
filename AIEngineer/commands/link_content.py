@@ -1,7 +1,11 @@
+## \file AIEngineer/commands/link_content.py
 # -*- coding: utf-8 -*-
 """
 Команда связывания изображения с текстовым описанием.
 """
+
+import AIEngineer
+
 
 import FreeCAD
 from PySide import QtGui

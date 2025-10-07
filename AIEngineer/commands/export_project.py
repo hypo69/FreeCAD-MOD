@@ -1,3 +1,4 @@
+## \file AIEngineer/commands/export_project.py
 # -*- coding: utf-8 -*-
 """
 Команда экспорта всего проекта AI Engineer в ZIP-архив.

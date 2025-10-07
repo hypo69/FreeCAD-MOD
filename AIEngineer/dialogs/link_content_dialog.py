@@ -1,7 +1,11 @@
+## \file AIEngineer/dialogs/link_content_dialog.py
 # -*- coding: utf-8 -*-
 """
 Диалог для связывания одного изображения с одним текстовым файлом.
 """
+
+import AIEngineer
+
 
 from PySide import QtGui
 from ..utils import get_image_files, get_text_files

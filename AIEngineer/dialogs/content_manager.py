@@ -1,3 +1,4 @@
+## \file AIEngineer/dialogs/content_manager.py
 # -*- coding: utf-8 -*-
 """
 Полнофункциональный менеджер контента: вкладки Images и Texts.

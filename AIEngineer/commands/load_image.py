@@ -1,3 +1,4 @@
+## \file AIEngineer/commands/load_image.py
 # -*- coding: utf-8 -*-
 """
 Команда загрузки изображений в рабочую директорию AIEngineer.

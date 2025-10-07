@@ -1,3 +1,4 @@
+## \file AIEngineer/project_manager.py
 # -*- coding: utf-8 -*-
 """
 Команда открытия настроек ИИ-провайдера (Google Gemini).

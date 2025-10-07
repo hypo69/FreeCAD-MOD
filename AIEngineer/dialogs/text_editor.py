@@ -1,3 +1,4 @@
+## \file AIEngineer/dialogs/text_editor.py
 # -*- coding: utf-8 -*-
 """
 Диалог редактирования текстового промпта (Markdown).

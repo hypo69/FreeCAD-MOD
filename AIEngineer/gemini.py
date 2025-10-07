@@ -1,7 +1,5 @@
 ## \file AIEngineer/gemini.py
 # -*- coding: utf-8 -*-
-#! .pyenv/bin/python3
-
 """
 Модуль для взаимодействия с Google Generative AI (Gemini).
 ==========================================================
@@ -162,11 +160,25 @@ class GoogleGenerativeAi:
         try:
             genai.configure(api_key=self.api_key)
             logger.debug('Gemini API сконфигурирован с ключом API')
+            print(self.model_name, self.generation_config, self.system_instruction)
 
+            # NOTE: Совместимость с google-generativeai >= 0.6.0
+            # Параметр 'response_mime_type': 'text/plain' БОЛЬШЕ НЕ ПОДДЕРЖИВАЕТСЯ.
+            # Начиная с версии 0.6.0, текстовый ответ является поведением по умолчанию,
+            # и явное указание 'text/plain' вызывает ошибку:
+            #   "Unknown field for GenerationConfig: response_mime_type".
+            #
+            # Используйте пустой словарь {} для текстовых ответов.
+            # Для JSON-ответов допустимо: {"response_mime_type": "application/json"},
+            # но только с моделями, поддерживающими JSON mode (например, gemini-1.5-pro).
+            #
+            # Подробнее: https://ai.google.dev/gemini-api/docs/response-format
+
+            self.generation_config = generation_config if generation_config is not None else {}
             self.model = genai.GenerativeModel(
                 model_name=self.model_name,
-                generation_config=self.generation_config,
-                system_instruction=self.system_instruction,
+                # generation_config=self.generation_config,
+                # system_instruction=self.system_instruction,
             )
             
             # Инициализация чата с системной инструкцией
@@ -428,6 +440,7 @@ class GoogleGenerativeAi:
         Returns:
             Optional[str]: Текстовый ответ модели или None в случае неудачи.
         """
+        start_time = time.time()  # ← ИСПРАВЛЕНО: определение start_time
         response_text: Optional[str] = None
 
         # Формирование содержимого запроса с учетом контекста
@@ -445,6 +458,8 @@ class GoogleGenerativeAi:
 
                 if hasattr(response, 'text') and response.text:
                     response_text = response.text
+                    processing_time = time.time() - start_time
+                    logger.info(f'Запрос обработан за {processing_time:.2f} сек.')
                     return normalize_answer(response_text) if clean_response else response_text
                 else:
                     sleep_time: int = INITIAL_RETRY_SLEEP_SECONDS ** attempt
@@ -483,21 +498,9 @@ class GoogleGenerativeAi:
             except Exception as ex:
                 logger.error(f'Ошибка при отправке запроса модели: {ex}')
                 return None
-            finally:
-                processing_time: float = time.time() - start_time
-                logger.info(f'Время обработки изображения: {processing_time:.2f} сек.')
 
-            if hasattr(response, 'text') and response.text:
-                return response.text
-            else:
-                logger.info(f'Модель вернула ответ без текста: {response}')
-                if hasattr(response, 'prompt_feedback'):
-                    logger.warning(f'Обратная связь по промпту: {response.prompt_feedback}')
-                return None
-
-        except Exception as ex:
-            logger.error(f'Произошла ошибка при обработке изображения: {ex}')
-            return None
+        logger.error(f'Не удалось получить ответ от модели после {attempts} попыток')
+        return None
 
     async def upload_file(
         self,
@@ -554,25 +557,6 @@ class GoogleGenerativeAi:
         except Exception as ex:
             logger.error(f'Ошибка загрузки файла "{resolved_file_name or file}": {ex}')
             return None
-
-            except (ValueError, TypeError):
-                if attempt >= INVALID_INPUT_MAX_ATTEMPTS:
-                    logger.error(f'Ошибка входных данных после {INVALID_INPUT_MAX_ATTEMPTS} попыток')
-                    break
-                logger.error(f'Некорректные входные данные. Попытка: {attempt + 1}/{attempts}')
-                time.sleep(5)
-                continue
-
-            except (InvalidArgument, RpcError):
-                logger.error('Ошибка API')
-                return None
-
-            except Exception as ex:
-                logger.error(f'Неожиданная ошибка: {ex}')
-                return None
-
-        logger.error(f'Не удалось получить ответ от модели после {attempts} попыток')
-        return None
 
     async def ask_async(
         self,
@@ -685,33 +669,54 @@ class GoogleGenerativeAi:
         Returns:
             Optional[str]: Текстовое описание изображения или None при ошибке.
         """
-        image_data: bytes
         start_time: float = time.time()
 
         try:
+            # Подготавливаем контент: сначала текст (если есть), затем изображение
+            content_parts: List[Any] = []
+            if prompt:
+                content_parts.append(prompt)
+
+            # Обработка изображения: преобразуем Path в строку, bytes оставляем как есть
             if isinstance(image, Path):
-                img_bytes = get_image_bytes(str(image))
-                if not img_bytes:
-                    logger.error(f'Не удалось прочитать байты изображения из файла: {image}')
+                if not image.exists():
+                    logger.error(f'Файл изображения не найден: {image}')
                     return None
-                image_data = img_bytes
+                # Передаём путь как строку — это требует google-generativeai
+                content_parts.append(str(image))
             elif isinstance(image, bytes):
-                image_data = image
+                content_parts.append(image)
             else:
                 logger.error(f'Некорректный тип для image. Ожидается Path или bytes, получено: {type(image)}')
                 return None
 
-            content_parts: List[Any] = []
-            if prompt:
-                content_parts.append({'text': prompt})
-
-            # Загрузка изображения через API
-            uploaded_file = genai.upload_file(path=image_data, mime_type=mime_type)
-            content_parts.append(uploaded_file)
-
+            # Генерация ответа — библиотека сама загрузит файл по пути
             try:
                 response = self.model.generate_content(content_parts)
+
+                if hasattr(response, 'text') and response.text:
+                    processing_time = time.time() - start_time
+                    logger.info(f'Изображение обработано за {processing_time:.2f} сек.')
+                    return normalize_answer(response.text)
+                else:
+                    logger.error(f'Пустой ответ от модели при описании изображения. Ответ: {response}')
+                    if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
+                        logger.warning(f'Обратная связь по промпту: {response.prompt_feedback}')
+                    return None
 
             except (DefaultCredentialsError, RefreshError):
                 logger.error('Ошибка аутентификации')
                 return None
+            except ResourceExhausted:
+                logger.error('Лимит ресурсов исчерпан (ResourceExhausted)')
+                return 'ResourceExhausted'
+            except (InvalidArgument, RpcError) as ex:
+                logger.error(f'Ошибка API при обработке изображения: {ex}')
+                return None
+            except Exception as ex:
+                logger.error(f'Неожиданная ошибка при генерации описания изображения: {ex}')
+                return None
+
+        except Exception as ex:
+            logger.error(f'Произошла ошибка при обработке изображения: {ex}')
+            return None

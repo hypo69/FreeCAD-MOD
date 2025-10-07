@@ -1,3 +1,4 @@
+## \file AIEngineer/commands/manage_content.py
 # -*- coding: utf-8 -*-
 """
 Команда открытия менеджера контента (просмотр, редактирование, удаление файлов).

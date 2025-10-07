@@ -1,3 +1,4 @@
+## \file AIEngineer/commands/load_text.py
 # -*- coding: utf-8 -*-
 """
 Команда загрузки или создания нового текстового файла (промпта).

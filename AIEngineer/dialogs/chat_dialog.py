@@ -86,16 +86,18 @@ class ChatDialog(QtGui.QDialog):
         
         # Инициализация переменных
         self.llm: Optional[GoogleGenerativeAi] = None
-        self.chat_history: List[Dict] = []
         self.current_image: Optional[Path] = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
         self.current_model: str = ''
+        self.chat_session_name: str = 'freecad_chat'
         
         # Создание UI
         self._create_ui()
         
         # Инициализация AI клиента
         self._initialize_ai()
+        
+        # Загрузка истории при открытии
+        self._load_chat_history()
 
     def _create_ui(self) -> None:
         """Функция создает пользовательский интерфейс."""
@@ -109,7 +111,7 @@ class ChatDialog(QtGui.QDialog):
         
         header_layout.addStretch()
         
-        # Отображение текущей модели (только для информации)
+        # Отображение текущей модели
         self.model_label = QtGui.QLabel('Model: Loading...')
         self.model_label.setStyleSheet(
             'QLabel { '
@@ -122,7 +124,7 @@ class ChatDialog(QtGui.QDialog):
         )
         header_layout.addWidget(self.model_label)
         
-        # Кнопка настроек (открывает settings_dialog)
+        # Кнопка настроек
         settings_btn = QtGui.QPushButton('⚙️ Settings')
         settings_btn.clicked.connect(self._open_settings)
         settings_btn.setMaximumWidth(100)
@@ -220,7 +222,7 @@ class ChatDialog(QtGui.QDialog):
         buttons_layout.addWidget(self.send_btn)
         
         close_btn = QtGui.QPushButton('Close')
-        close_btn.clicked.connect(self.accept)
+        close_btn.clicked.connect(self._on_close)
         close_btn.setMaximumWidth(100)
         buttons_layout.addWidget(close_btn)
         
@@ -275,6 +277,8 @@ class ChatDialog(QtGui.QDialog):
                     'При анализе изображений описывайте технические детали.'
                 )
             )
+            # Установка имени сессии чата
+            self.llm.chat_session_name = self.chat_session_name
             self.model_label.setText(f'Model: {model_name}')
             FreeCAD.Console.PrintMessage(f'[AIEngineer] Chat initialized with {model_name}\n')
             
@@ -287,6 +291,43 @@ class ChatDialog(QtGui.QDialog):
             )
             self.send_btn.setEnabled(False)
             self.model_label.setText('Model: Error')
+
+    def _load_chat_history(self) -> None:
+        """Функция загружает историю чата при открытии диалога."""
+        if not self.llm:
+            return
+        
+        try:
+            # Попытка загрузить историю из файла
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.llm._load_chat_history())
+            loop.close()
+            
+            # Восстановление сообщений в UI
+            if self.llm.chat_history:
+                for msg in self.llm.chat_history:
+                    role = msg.get('role', '')
+                    parts = msg.get('parts', [])
+                    
+                    if role == 'user':
+                        # Извлечение текста из частей
+                        text_parts = [p for p in parts if isinstance(p, str)]
+                        if text_parts:
+                            text = '\n'.join(text_parts)
+                            self._add_message_to_ui(text, is_user=True)
+                    elif role == 'model':
+                        text_parts = [p for p in parts if isinstance(p, str)]
+                        if text_parts:
+                            text = '\n'.join(text_parts)
+                            self._add_message_to_ui(text, is_user=False)
+                
+                FreeCAD.Console.PrintMessage(
+                    f'[AIEngineer] Loaded {len(self.llm.chat_history)} messages from history\n'
+                )
+        except Exception as ex:
+            FreeCAD.Console.PrintError(f'[AIEngineer] Failed to load chat history: {ex}\n')
 
     def _open_settings(self) -> None:
         """Функция открывает диалог настроек для изменения модели."""
@@ -338,7 +379,7 @@ class ChatDialog(QtGui.QDialog):
 
     def _clear_chat(self) -> None:
         """Функция очищает историю чата."""
-        if not self.chat_history:
+        if not self.llm or not self.llm.chat_history:
             return
         
         response = QtGui.QMessageBox.question(
@@ -359,7 +400,6 @@ class ChatDialog(QtGui.QDialog):
             if self.llm:
                 self.llm.clear_history()
             
-            self.chat_history = []
             FreeCAD.Console.PrintMessage('[AIEngineer] Chat history cleared\n')
 
     def _add_message_to_ui(self, text: str, is_user: bool = True) -> None:
@@ -416,7 +456,7 @@ class ChatDialog(QtGui.QDialog):
 
     def _process_message(self, message: str, image_path: Optional[Path] = None) -> None:
         """
-        Функция обрабатывает сообщение асинхронно.
+        Функция обрабатывает сообщение и использует метод chat для сохранения истории.
 
         Args:
             message (str): Текст сообщения.
@@ -425,29 +465,41 @@ class ChatDialog(QtGui.QDialog):
         try:
             response: Optional[str] = None
             
-            # Обработка с изображением или без
+            # Использование метода chat для сохранения истории
             if image_path and image_path.exists():
+                # Для изображений используем describe_image, но добавляем в историю вручную
                 mime_type: str = 'image/jpeg' if image_path.suffix.lower() in ['.jpg', '.jpeg'] else 'image/png'
                 response = self.llm.describe_image(
                     image=image_path,
                     mime_type=mime_type,
                     prompt=message
                 )
+                
+                # Добавление в историю вручную, так как describe_image не использует chat
+                if response:
+                    self.llm.chat_history.append({'role': 'user', 'parts': [message, str(image_path)]})
+                    self.llm.chat_history.append({'role': 'model', 'parts': [response]})
+                    
+                    # Сохранение истории
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(self.llm._save_chat_history())
+                    loop.close()
             else:
-                response = self.llm.ask(message)
+                # Использование метода chat, который автоматически сохраняет историю
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                response = loop.run_until_complete(
+                    self.llm.chat(message, chat_session_name=self.chat_session_name)
+                )
+                loop.close()
             
             # Обработка ответа
             if response:
                 self._add_message_to_ui(response, is_user=False)
-                self.chat_history.append({
-                    'role': 'user',
-                    'content': message,
-                    'image': str(image_path) if image_path else None
-                })
-                self.chat_history.append({
-                    'role': 'assistant',
-                    'content': response
-                })
+                FreeCAD.Console.PrintMessage('[AIEngineer] Response received and saved to history\n')
             else:
                 QtGui.QMessageBox.warning(
                     self,
@@ -469,3 +521,18 @@ class ChatDialog(QtGui.QDialog):
             self.input_text.setEnabled(True)
             self.loading_label.hide()
             self.input_text.setFocus()
+
+    def _on_close(self) -> None:
+        """Функция сохраняет историю при закрытии диалога."""
+        if self.llm and self.llm.chat_history:
+            try:
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(self.llm._save_chat_history())
+                loop.close()
+                FreeCAD.Console.PrintMessage('[AIEngineer] Chat history saved on close\n')
+            except Exception as ex:
+                FreeCAD.Console.PrintError(f'[AIEngineer] Failed to save history on close: {ex}\n')
+        
+        self.accept()

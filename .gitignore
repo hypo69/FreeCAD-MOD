@@ -201,8 +201,4 @@ C:\WINDOWS\TEMP
 *.bkp
 # Files Copies
 *(*).*
-ai_games/
-config.json
-/src/config.json
-/SANDBOX/davidka/davidka.json
-/viasfora.vsftheme
+

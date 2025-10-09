@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg 
+  version="1.1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 600 220"
+  width="1200"
+  height="440"
+>
+  <!-- Background -->
+  <rect x="0" y="0" width="600" height="220" fill="#ffffff"/>
+
+  <!-- Long section (30x12 m) -->
+  <rect x="100" y="30" width="300" height="120" fill="#f8f9fb" stroke="#333" stroke-width="2"/>
+  <text x="250" y="24" font-size="14" text-anchor="middle" fill="#222">Long section — 30×12 m</text>
+
+  <!-- Short section (15x10 m) -->
+  <rect x="400" y="30" width="150" height="100" fill="#fffaf0" stroke="#333" stroke-width="2"/>
+  <text x="475" y="24" font-size="14" text-anchor="middle" fill="#222">Short section — 15×10 m</text>
+
+  <!-- Gate 4.5 m -->
+  <rect x="55" y="70" width="45" height="60" fill="#7b4f2b" stroke="#4a2c17" stroke-width="1"/>
+  <text x="77.5" y="145" font-size="11" text-anchor="middle" fill="#4a2c17">Gate 4.5 m</text>
+
+  <!-- Gate 4.0 m -->
+  <rect x="420" y="130" width="40" height="45" fill="#7b4f2b" stroke="#4a2c17" stroke-width="1"/>
+  <text x="440" y="182" font-size="11" text-anchor="middle" fill="#4a2c17">Gate 4.0 m</text>
+
+  <!-- Zones inside long section -->
+  <rect x="100" y="30" width="60" height="120" fill="#e8f6ff" stroke="#2b7bb9"/>
+  <text x="130" y="60" font-size="12" text-anchor="middle" fill="#124a6a">A — Incoming / Storage</text>
+
+  <rect x="160" y="30" width="120" height="120" fill="#fff7e6" stroke="#d28b00"/>
+  <text x="220" y="60" font-size="12" text-anchor="middle" fill="#8a4a00">B — Metalwork</text>
+
+  <rect x="280" y="30" width="20" height="120" fill="#f2f2f2" stroke="#999"/>
+  <text x="290" y="60" font-size="12" text-anchor="middle" fill="#666">C — Utility</text>
+
+  <rect x="300" y="30" width="100" height="120" fill="#eefde9" stroke="#2b9d3a"/>
+  <text x="350" y="60" font-size="12" text-anchor="middle" fill="#156b2d">E — Assembly</text>
+
+  <!-- Zones in short section -->
+  <rect x="400" y="30" width="60" height="100" fill="#fff0f3" stroke="#c23a66"/>
+  <text x="430" y="55" font-size="12" text-anchor="middle" fill="#8a2140">D — Painting</text>
+
+  <rect x="460" y="30" width="30" height="100" fill="#fff8e6" stroke="#b08900"/>
+  <text x="475" y="55" font-size="12" text-anchor="middle" fill="#7a5a00">F — Testing</text>
+
+  <rect x="490" y="30" width="60" height="100" fill="#f2fff0" stroke="#2f9d5a"/>
+  <text x="520" y="55" font-size="12" text-anchor="middle" fill="#1e7a3a">G — Packing / Storage</text>
+
+  <!-- Office -->
+  <rect x="400" y="5" width="150" height="20" fill="#eef2ff" stroke="#3657c2"/>
+  <text x="475" y="19" font-size="11" text-anchor="middle" fill="#233b8a">H — Office / Staff</text>
+
+  <!-- Compressor outside -->
+  <rect x="5" y="60" width="40" height="40" fill="#dbeef3" stroke="#2b8aa3"/>
+  <text x="25" y="108" font-size="11" text-anchor="middle" fill="#2b8aa3">Compressor</text>
+
+  <!-- Pneumatic line -->
+  <line x1="45" y1="80" x2="140" y2="100" stroke="#0077aa" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="110" y="94" font-size="11" fill="#0077aa">air line →</text>
+
+  <!-- Flow arrows -->
+  <line x1="100" y1="100" x2="190" y2="100" stroke="#333" stroke-width="2"/>
+  <line x1="280" y1="100" x2="350" y2="100" stroke="#333" stroke-width="2"/>
+  <line x1="400" y1="100" x2="475" y2="100" stroke="#333" stroke-width="2"/>
+</svg>
